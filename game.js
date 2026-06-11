@@ -50,9 +50,9 @@ function setGameMode(mode) {
 }
 
 /**
- * Set current questions
+ * Set current questions (local state)
  */
-function setQuestions(questions) {
+function setLocalQuestions(questions) {
     currentQuestions = questions;
 }
 

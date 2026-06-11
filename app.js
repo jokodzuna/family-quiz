@@ -131,7 +131,7 @@ async function handleFileUpload(e) {
     
     try {
         const questions = await parseUploadedJSON(file);
-        setQuestions(questions);
+        setLocalQuestions(questions);
         
         await setQuestions(questions);
         
@@ -190,7 +190,7 @@ async function handleLoadSaved() {
         const selectedSet = questionSets[setId];
         
         if (selectedSet) {
-            setQuestions(selectedSet.questions);
+            setLocalQuestions(selectedSet.questions);
             await setQuestions(selectedSet.questions);
             
             // Update UI
