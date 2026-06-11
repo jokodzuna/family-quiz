@@ -194,11 +194,13 @@ async function handleLoadSaved() {
             await setQuestions(selectedSet.questions);
             
             // Update UI
-            document.getElementById('theme-input').value = selectedSet.theme;
             gameModeSelect.value = selectedSet.mode;
             setGameMode(selectedSet.mode);
             
-            alert(`Loaded "${selectedSet.name}" with ${selectedSet.questions.length} questions`);
+            showSaveSetSection();
+            
+            const uploadStatus = document.getElementById('upload-status');
+            uploadStatus.textContent = `✅ ${selectedSet.questions.length} questions loaded from "${selectedSet.name}"`;
         }
     } catch (error) {
         console.error('Error loading saved set:', error);
