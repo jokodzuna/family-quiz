@@ -11,7 +11,7 @@ const firebaseConfig = {
 
 // Gemini API Key
 // NOTE: In production, this should be server-side to protect the key
-const GEMINI_API_KEY = "AQ.Ab8RN6KQbpNE_TXtrhJ1aFD4rD-MiqNW3dP2reqq_ipXjKoH1g";
+const GEMINI_API_KEY = "AQ.Ab8RN6Jtos4tFGlaoxilXu-wGrhWAnskcZpV7RZA73v5Eq3hxA";
 
 // Constants
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";

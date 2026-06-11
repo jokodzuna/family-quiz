@@ -23,10 +23,18 @@ async function generateQuestions(theme, quantity, mode) {
         });
         
         if (!response.ok) {
-            throw new Error(`API request failed: ${response.status}`);
+            const errorText = await response.text();
+            console.error('Gemini API error response:', errorText);
+            throw new Error(`API request failed: ${response.status} - ${errorText}`);
         }
         
         const data = await response.json();
+        console.log('Gemini API response:', data);
+        
+        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+            throw new Error('Invalid API response structure');
+        }
+        
         const text = data.candidates[0].content.parts[0].text;
         
         // Strip any markdown code fences

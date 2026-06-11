@@ -147,7 +147,9 @@ async function handleGenerateQuestions() {
         btnGenerate.disabled = true;
         btnGenerate.textContent = 'Generating...';
         
+        console.log('Generating questions with:', { theme, quantity, mode });
         const questions = await generateQuestions(theme, quantity, mode);
+        console.log('Generated questions:', questions);
         setQuestions(questions);
         
         await setQuestions(questions);
@@ -156,7 +158,7 @@ async function handleGenerateQuestions() {
         alert(`Generated ${questions.length} questions!`);
     } catch (error) {
         console.error('Error generating questions:', error);
-        alert('Failed to generate questions. Please try again.');
+        alert(`Failed to generate questions: ${error.message || error}. Check console for details.`);
     } finally {
         btnGenerate.disabled = false;
         btnGenerate.textContent = 'Generate';
