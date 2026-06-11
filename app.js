@@ -234,6 +234,7 @@ async function handleStartGame() {
     
     try {
         console.log('About to call setQuestions with', currentQuestions.length, 'questions');
+        console.log('setQuestions function:', typeof setQuestions);
         // Ensure questions are set to Firebase before starting
         await setQuestions(currentQuestions);
         console.log('setQuestions completed');
