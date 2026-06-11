@@ -1,0 +1,554 @@
+// App Entry Point
+// Initializes Firebase, handles screen routing
+
+// Initialize Firebase
+initFirebase();
+
+// DOM Elements
+const btnHost = document.getElementById('btn-host');
+const btnJoin = document.getElementById('btn-join');
+const btnJoinGame = document.getElementById('btn-join-game');
+const btnGenerate = document.getElementById('btn-generate');
+const btnUpload = document.getElementById('btn-upload');
+const btnSaveSet = document.getElementById('btn-save-set');
+const btnLoadSaved = document.getElementById('btn-load-saved');
+const btnStartGame = document.getElementById('btn-start-game');
+const btnBuzz = document.getElementById('btn-buzz');
+const btnSubmitAnswer = document.getElementById('btn-submit-answer');
+const btnPlayAgain = document.getElementById('btn-play-again');
+const btnNewGame = document.getElementById('btn-new-game');
+const gameModeSelect = document.getElementById('game-mode');
+
+// Event Listeners
+btnHost.addEventListener('click', handleHostGame);
+btnJoin.addEventListener('click', showJoinScreen);
+btnJoinGame.addEventListener('click', handleJoinGame);
+btnGenerate.addEventListener('click', handleGenerateQuestions);
+btnUpload.addEventListener('click', handleUploadQuestions);
+btnSaveSet.addEventListener('click', handleSaveSet);
+btnLoadSaved.addEventListener('click', handleLoadSaved);
+btnStartGame.addEventListener('click', handleStartGame);
+btnBuzz.addEventListener('click', handleBuzz);
+btnSubmitAnswer.addEventListener('click', handleSubmitAnswer);
+btnPlayAgain.addEventListener('click', handlePlayAgain);
+btnNewGame.addEventListener('click', handleNewGame);
+gameModeSelect.addEventListener('change', handleGameModeChange);
+
+// File input for upload
+const fileUpload = document.getElementById('file-upload');
+
+/**
+ * Handle host game button
+ */
+async function handleHostGame() {
+    const playerId = generatePlayerId();
+    const playerName = prompt('Enter your name as host:');
+    
+    if (!playerName) return;
+    
+    setPlayerId(playerId);
+    setHostStatus(true);
+    
+    try {
+        const roomCode = await createRoom(playerId, playerName);
+        setRoomCode(roomCode);
+        
+        updateRoomCode(roomCode);
+        showScreen('screen-host-lobby');
+        
+        // Listen to players joining
+        onPlayersChanged(updatePlayerList);
+        
+        // Load saved question sets
+        loadSavedQuestionSets();
+    } catch (error) {
+        console.error('Error hosting game:', error);
+        alert(`Failed to create room: ${error.message || error}. Check console for details.`);
+    }
+}
+
+/**
+ * Show join screen
+ */
+function showJoinScreen() {
+    showScreen('screen-join');
+}
+
+/**
+ * Handle join game button
+ */
+async function handleJoinGame() {
+    const roomCode = document.getElementById('join-room-code').value.trim();
+    const playerName = document.getElementById('player-name').value.trim();
+    
+    if (!roomCode || !playerName) {
+        alert('Please enter both room code and your name');
+        return;
+    }
+    
+    if (roomCode.length !== 4) {
+        alert('Room code must be 4 digits');
+        return;
+    }
+    
+    const playerId = generatePlayerId();
+    setPlayerId(playerId);
+    setHostStatus(false);
+    setRoomCode(roomCode);
+    
+    try {
+        await joinRoom(roomCode, playerId, playerName);
+        
+        updateRoomCode(roomCode);
+        showScreen('screen-waiting');
+        
+        // Listen to game state changes
+        onGameStateChanged(handleGameStateChanged);
+        
+        // Set connected status on page unload
+        window.addEventListener('beforeunload', () => {
+            setPlayerConnected(playerId, false);
+        });
+    } catch (error) {
+        console.error('Error joining game:', error);
+        alert('Failed to join room. Please check the room code and try again.');
+    }
+}
+
+/**
+ * Handle game mode change
+ */
+async function handleGameModeChange(e) {
+    const mode = e.target.value;
+    setGameMode(mode);
+    await setGameMode(mode);
+}
+
+/**
+ * Handle generate questions button
+ */
+async function handleGenerateQuestions() {
+    const theme = document.getElementById('theme-input').value.trim();
+    const quantity = parseInt(document.getElementById('quantity-input').value);
+    
+    if (!theme) {
+        alert('Please enter a theme');
+        return;
+    }
+    
+    if (quantity < 1 || quantity > 50) {
+        alert('Quantity must be between 1 and 50');
+        return;
+    }
+    
+    const mode = gameModeSelect.value;
+    
+    try {
+        btnGenerate.disabled = true;
+        btnGenerate.textContent = 'Generating...';
+        
+        const questions = await generateQuestions(theme, quantity, mode);
+        setQuestions(questions);
+        
+        await setQuestions(questions);
+        
+        showSaveSetSection();
+        alert(`Generated ${questions.length} questions!`);
+    } catch (error) {
+        console.error('Error generating questions:', error);
+        alert('Failed to generate questions. Please try again.');
+    } finally {
+        btnGenerate.disabled = false;
+        btnGenerate.textContent = 'Generate';
+    }
+}
+
+/**
+ * Handle upload questions button
+ */
+async function handleUploadQuestions() {
+    const file = fileUpload.files[0];
+    
+    if (!file) {
+        alert('Please select a JSON file');
+        return;
+    }
+    
+    try {
+        const questions = await parseUploadedJSON(file);
+        setQuestions(questions);
+        
+        await setQuestions(questions);
+        
+        showSaveSetSection();
+        alert(`Loaded ${questions.length} questions!`);
+    } catch (error) {
+        console.error('Error uploading questions:', error);
+        alert('Failed to load questions. Please check the file format.');
+    }
+}
+
+/**
+ * Handle save set button
+ */
+async function handleSaveSet() {
+    const setName = document.getElementById('set-name-input').value.trim();
+    const theme = document.getElementById('theme-input').value.trim();
+    const mode = gameModeSelect.value;
+    
+    if (!setName) {
+        alert('Please enter a name for this set');
+        return;
+    }
+    
+    if (!currentQuestions || currentQuestions.length === 0) {
+        alert('No questions to save');
+        return;
+    }
+    
+    try {
+        await saveQuestionSet(setName, theme, mode, currentQuestions);
+        alert('Question set saved!');
+        hideSaveSetSection();
+        loadSavedQuestionSets();
+    } catch (error) {
+        console.error('Error saving set:', error);
+        alert('Failed to save question set');
+    }
+}
+
+/**
+ * Handle load saved button
+ */
+async function handleLoadSaved() {
+    const setId = document.getElementById('load-saved-select').value;
+    
+    if (!setId) {
+        alert('Please select a saved set');
+        return;
+    }
+    
+    try {
+        const questionSets = await loadQuestionSets();
+        const selectedSet = questionSets[setId];
+        
+        if (selectedSet) {
+            setQuestions(selectedSet.questions);
+            await setQuestions(selectedSet.questions);
+            
+            // Update UI
+            document.getElementById('theme-input').value = selectedSet.theme;
+            gameModeSelect.value = selectedSet.mode;
+            setGameMode(selectedSet.mode);
+            
+            alert(`Loaded "${selectedSet.name}" with ${selectedSet.questions.length} questions`);
+        }
+    } catch (error) {
+        console.error('Error loading saved set:', error);
+        alert('Failed to load question set');
+    }
+}
+
+/**
+ * Load saved question sets dropdown
+ */
+async function loadSavedQuestionSets() {
+    try {
+        const questionSets = await loadQuestionSets();
+        updateSavedSetsDropdown(questionSets);
+    } catch (error) {
+        console.error('Error loading question sets:', error);
+    }
+}
+
+/**
+ * Handle start game button
+ */
+async function handleStartGame() {
+    if (!currentQuestions || currentQuestions.length === 0) {
+        alert('Please generate or load questions first');
+        return;
+    }
+    
+    try {
+        await startGame();
+        
+        // Listen to game state changes
+        onGameStateChanged(handleGameStateChanged);
+        onBuzzChanged(handleBuzzChanged);
+        onLockedOutChanged(handleLockedOutChanged);
+    } catch (error) {
+        console.error('Error starting game:', error);
+        alert('Failed to start game');
+    }
+}
+
+/**
+ * Handle game state changes
+ */
+function handleGameStateChanged(gameData) {
+    if (!gameData) return;
+    
+    const status = gameData.status;
+    
+    if (status === 'active') {
+        handleActiveGame(gameData);
+    } else if (status === 'finished') {
+        handleFinishedGame(gameData);
+    }
+    
+    // Update scores display
+    if (gameData.players) {
+        updateScoresDisplay(gameData.players);
+    }
+}
+
+/**
+ * Handle active game state
+ */
+function handleActiveGame(gameData) {
+    const currentIndex = gameData.currentQuestionIndex || 0;
+    const questions = gameData.questions;
+    
+    if (!questions || currentIndex >= Object.keys(questions).length) {
+        // Game over
+        endGame();
+        return;
+    }
+    
+    const question = questions[currentIndex];
+    currentQuestionData = question;
+    
+    // Update question display
+    updateQuestionDisplay(question, currentIndex, Object.keys(questions).length);
+    
+    // Show question screen
+    showScreen('screen-question');
+    
+    // Reset UI state
+    hideBuzzedPlayer();
+    hideMultipleChoiceOptions();
+    hideTypeAnswerInput();
+    hideLockedIndicator();
+    
+    // Check if player is locked out
+    const isLocked = isPlayerLockedOut(currentPlayerId, gameData.lockedOut);
+    
+    if (isLocked) {
+        showLockedIndicator();
+        hideBuzzButton();
+    } else {
+        showBuzzButton(!gameData.buzz);
+    }
+    
+    // If someone buzzed, handle it
+    if (gameData.buzz) {
+        handleBuzzedPlayer(gameData.buzz, question, gameData);
+    }
+}
+
+/**
+ * Handle buzz changes
+ */
+function handleBuzzChanged(buzzData) {
+    if (!buzzData) {
+        hideBuzzedPlayer();
+        showBuzzButton(true);
+        return;
+    }
+    
+    showBuzzedPlayer(buzzData.playerName);
+    
+    // Disable buzz button for everyone
+    const buzzButton = document.getElementById('btn-buzz');
+    if (buzzButton) {
+        buzzButton.disabled = true;
+    }
+    
+    // If current player buzzed, show answer options
+    if (buzzData.playerId === currentPlayerId && currentQuestionData) {
+        showAnswerOptions(currentQuestionData);
+    }
+}
+
+/**
+ * Handle locked out changes
+ */
+function handleLockedOutChanged(lockedOutData) {
+    if (isPlayerLockedOut(currentPlayerId, lockedOutData)) {
+        showLockedIndicator();
+        hideBuzzButton();
+    }
+}
+
+/**
+ * Handle buzzed player
+ */
+function handleBuzzedPlayer(buzzData, question, gameData) {
+    showBuzzedPlayer(buzzData.playerName);
+    
+    // Disable buzz button
+    const buzzButton = document.getElementById('btn-buzz');
+    if (buzzButton) {
+        buzzButton.disabled = true;
+    }
+    
+    // If current player buzzed, show answer options
+    if (buzzData.playerId === currentPlayerId) {
+        showAnswerOptions(question);
+    }
+}
+
+/**
+ * Show answer options based on game mode
+ */
+function showAnswerOptions(question) {
+    const mode = currentGameMode || gameModeSelect.value;
+    
+    if (mode === 'multipleChoice') {
+        const options = getShuffledOptions(question);
+        showMultipleChoiceOptions(options, true);
+    } else {
+        showTypeAnswerInput(true);
+    }
+}
+
+/**
+ * Handle buzz button
+ */
+async function handleBuzz() {
+    if (!currentPlayerId) return;
+    
+    // Get player name from game state
+    let playerName = 'Player';
+    const playersSnapshot = await gameRef.child('players').once('value');
+    const players = playersSnapshot.val();
+    if (players && players[currentPlayerId]) {
+        playerName = players[currentPlayerId].name;
+    }
+    
+    try {
+        await buzz(currentPlayerId, playerName);
+    } catch (error) {
+        console.error('Error buzzing:', error);
+    }
+}
+
+/**
+ * Handle submit answer button
+ */
+async function handleSubmitAnswer() {
+    if (!currentQuestionData || !currentPlayerId) return;
+    
+    const mode = currentGameMode || gameModeSelect.value;
+    let answer;
+    
+    if (mode === 'typeAnswer') {
+        answer = document.getElementById('answer-input').value.trim();
+    } else {
+        // Multiple choice - handled by option buttons
+        return;
+    }
+    
+    if (!answer) return;
+    
+    try {
+        const isCorrect = await handleAnswer(currentPlayerId, answer, currentQuestionData.answer);
+        
+        if (isCorrect) {
+            alert('Correct! +5 points');
+        } else {
+            alert('Wrong! -2 points');
+        }
+    } catch (error) {
+        console.error('Error submitting answer:', error);
+    }
+}
+
+/**
+ * Handle multiple choice answer (called from ui.js)
+ */
+async function handleMultipleChoiceAnswer(answer) {
+    if (!currentQuestionData || !currentPlayerId) return;
+    
+    try {
+        const isCorrect = await handleAnswer(currentPlayerId, answer, currentQuestionData.answer);
+        
+        // Highlight correct/wrong
+        const buttons = document.querySelectorAll('.option-btn');
+        buttons.forEach(btn => {
+            btn.disabled = true;
+            if (btn.textContent === currentQuestionData.answer) {
+                btn.classList.add('correct');
+            } else if (btn.textContent === answer && !isCorrect) {
+                btn.classList.add('wrong');
+            }
+        });
+        
+        if (isCorrect) {
+            alert('Correct! +5 points');
+        } else {
+            alert('Wrong! -2 points');
+        }
+    } catch (error) {
+        console.error('Error submitting answer:', error);
+    }
+}
+
+/**
+ * Handle finished game state
+ */
+function handleFinishedGame(gameData) {
+    showScreen('screen-results');
+    
+    if (gameData.players) {
+        updateLeaderboard(gameData.players);
+    }
+}
+
+/**
+ * Handle play again button
+ */
+async function handlePlayAgain() {
+    try {
+        // Reset game state
+        await gameRef.child('currentQuestionIndex').set(0);
+        await gameRef.child('buzz').set(null);
+        await gameRef.child('lockedOut').set({});
+        
+        // Reset scores
+        const playersSnapshot = await gameRef.child('players').once('value');
+        const players = playersSnapshot.val();
+        
+        if (players) {
+            Object.keys(players).forEach(async (playerId) => {
+                await gameRef.child('players').child(playerId).child('score').set(0);
+            });
+        }
+        
+        await gameRef.child('status').set('active');
+    } catch (error) {
+        console.error('Error restarting game:', error);
+        alert('Failed to restart game');
+    }
+}
+
+/**
+ * Handle new game button
+ */
+async function handleNewGame() {
+    try {
+        await leaveGame();
+        initGameState();
+        showScreen('screen-home');
+    } catch (error) {
+        console.error('Error leaving game:', error);
+    }
+}
+
+/**
+ * Generate a unique player ID
+ */
+function generatePlayerId() {
+    return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}

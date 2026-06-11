@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Family Quiz</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Home Screen -->
+    <div id="screen-home" class="screen">
+        <h1 class="app-title">Family Quiz</h1>
+        <div class="button-group">
+            <button id="btn-host" class="btn-primary">Host Game</button>
+            <button id="btn-join" class="btn-secondary">Join Game</button>
+        </div>
+    </div>
+
+    <!-- Host Lobby Screen -->
+    <div id="screen-host-lobby" class="screen hidden">
+        <h2>Host Lobby</h2>
+        <div class="room-code-display">
+            <span class="label">Room Code:</span>
+            <span id="room-code" class="code">----</span>
+        </div>
+        <div class="player-list">
+            <h3>Players</h3>
+            <ul id="host-player-list"></ul>
+        </div>
+        <div class="game-mode-selector">
+            <h3>Game Mode</h3>
+            <select id="game-mode">
+                <option value="multipleChoice">Multiple Choice</option>
+                <option value="typeAnswer">Type Answer</option>
+            </select>
+        </div>
+        <div class="question-generation">
+            <h3>Question Generation</h3>
+            <input type="text" id="theme-input" placeholder="Theme (e.g., Star Wars, Animals)">
+            <input type="number" id="quantity-input" value="20" min="1" max="50">
+            <button id="btn-generate" class="btn-primary">Generate</button>
+            <input type="file" id="file-upload" accept=".json">
+            <button id="btn-upload" class="btn-secondary">Upload JSON</button>
+            <div id="save-set-section" class="hidden">
+                <input type="text" id="set-name-input" placeholder="Set name">
+                <button id="btn-save-set" class="btn-secondary">Save Set</button>
+            </div>
+            <div class="load-saved-section">
+                <select id="load-saved-select">
+                    <option value="">Load Saved Set...</option>
+                </select>
+                <button id="btn-load-saved" class="btn-secondary">Load</button>
+            </div>
+        </div>
+        <button id="btn-start-game" class="btn-primary" disabled>Start Game</button>
+    </div>
+
+    <!-- Join Screen -->
+    <div id="screen-join" class="screen hidden">
+        <h2>Join Game</h2>
+        <input type="text" id="join-room-code" placeholder="Enter 4-digit room code" maxlength="4">
+        <input type="text" id="player-name" placeholder="Enter your name">
+        <button id="btn-join-game" class="btn-primary">Join</button>
+    </div>
+
+    <!-- Waiting Screen -->
+    <div id="screen-waiting" class="screen hidden">
+        <h2>Waiting for Host</h2>
+        <div class="room-code-display">
+            <span class="label">Room Code:</span>
+            <span id="waiting-room-code" class="code">----</span>
+        </div>
+        <p>Waiting for the host to start the game...</p>
+    </div>
+
+    <!-- Question Screen -->
+    <div id="screen-question" class="screen hidden">
+        <div class="question-header">
+            <span id="question-progress">Question 1 of 20</span>
+        </div>
+        <div class="scores-bar">
+            <div id="scores-container"></div>
+        </div>
+        <div class="question-content">
+            <h2 id="question-text">Question text here</h2>
+        </div>
+        <div id="buzz-section" class="buzz-section">
+            <button id="btn-buzz" class="btn-buzz">BUZZ!</button>
+        </div>
+        <div id="buzzed-player" class="buzzed-player hidden">
+            <span id="buzzed-player-name">Player Name</span> buzzed!
+        </div>
+        <div id="answer-section" class="answer-section hidden">
+            <div id="multiple-choice-options" class="multiple-choice-options hidden"></div>
+            <div id="type-answer-input" class="type-answer-input hidden">
+                <input type="text" id="answer-input" placeholder="Type your answer">
+                <button id="btn-submit-answer" class="btn-primary">Submit</button>
+            </div>
+        </div>
+        <div id="locked-indicator" class="locked-indicator hidden">
+            You are locked out for this question
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="screen-results" class="screen hidden">
+        <h2>Final Results</h2>
+        <div id="leaderboard" class="leaderboard"></div>
+        <div class="button-group">
+            <button id="btn-play-again" class="btn-primary">Play Again</button>
+            <button id="btn-new-game" class="btn-secondary">New Game</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="config.js"></script>
+    <script src="firebase.js"></script>
+    <script src="ai.js"></script>
+    <script src="game.js"></script>
+    <script src="ui.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
