@@ -233,8 +233,10 @@ async function handleStartGame() {
     console.log('Current room code:', currentRoomCode);
     
     try {
+        console.log('About to call setQuestions with', currentQuestions.length, 'questions');
         // Ensure questions are set to Firebase before starting
         await setQuestions(currentQuestions);
+        console.log('setQuestions completed');
         
         await startGame();
         
