@@ -183,18 +183,11 @@ async function setGameMode(mode) {
  * Set questions for the game
  */
 async function setQuestions(questions) {
-    console.log('setQuestions called, gameRef:', gameRef);
     try {
-        if (!gameRef) {
-            console.error('gameRef is null in setQuestions');
-            return;
-        }
-        console.log('Setting questions to Firebase, count:', questions.length);
+        if (!gameRef) return;
         await gameRef.child('questions').set(questions);
-        console.log('Questions set successfully to Firebase');
     } catch (error) {
         console.error('Error setting questions:', error);
-        throw error;
     }
 }
 
@@ -203,18 +196,11 @@ async function setQuestions(questions) {
  */
 async function startGame() {
     try {
-        if (!gameRef) {
-            console.error('gameRef is null in startGame');
-            return;
-        }
-        console.log('Setting game status to active');
+        if (!gameRef) return;
         await gameRef.child('status').set('active');
-        console.log('Setting currentQuestionIndex to 0');
         await gameRef.child('currentQuestionIndex').set(0);
-        console.log('Game started successfully');
     } catch (error) {
         console.error('Error starting game:', error);
-        throw error;
     }
 }
 
