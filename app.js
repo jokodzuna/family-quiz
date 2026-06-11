@@ -229,7 +229,13 @@ async function handleStartGame() {
         return;
     }
     
+    console.log('Starting game with', currentQuestions.length, 'questions');
+    console.log('Current room code:', currentRoomCode);
+    
     try {
+        // Ensure questions are set to Firebase before starting
+        await setQuestions(currentQuestions);
+        
         await startGame();
         
         // Listen to game state changes
@@ -246,9 +252,14 @@ async function handleStartGame() {
  * Handle game state changes
  */
 function handleGameStateChanged(gameData) {
-    if (!gameData) return;
+    console.log('Game state changed:', gameData);
+    if (!gameData) {
+        console.log('Game data is null, currentRoomCode:', currentRoomCode);
+        return;
+    }
     
     const status = gameData.status;
+    console.log('Game status:', status);
     
     if (status === 'active') {
         handleActiveGame(gameData);

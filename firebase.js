@@ -196,11 +196,18 @@ async function setQuestions(questions) {
  */
 async function startGame() {
     try {
-        if (!gameRef) return;
+        if (!gameRef) {
+            console.error('gameRef is null in startGame');
+            return;
+        }
+        console.log('Setting game status to active');
         await gameRef.child('status').set('active');
+        console.log('Setting currentQuestionIndex to 0');
         await gameRef.child('currentQuestionIndex').set(0);
+        console.log('Game started successfully');
     } catch (error) {
         console.error('Error starting game:', error);
+        throw error;
     }
 }
 
