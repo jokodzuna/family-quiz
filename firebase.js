@@ -183,11 +183,18 @@ async function setGameMode(mode) {
  * Set questions for the game
  */
 async function setQuestions(questions) {
+    console.log('setQuestions called, gameRef:', gameRef);
     try {
-        if (!gameRef) return;
+        if (!gameRef) {
+            console.error('gameRef is null in setQuestions');
+            return;
+        }
+        console.log('Setting questions to Firebase, count:', questions.length);
         await gameRef.child('questions').set(questions);
+        console.log('Questions set successfully to Firebase');
     } catch (error) {
         console.error('Error setting questions:', error);
+        throw error;
     }
 }
 
