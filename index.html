@@ -35,12 +35,9 @@
             </select>
         </div>
         <div class="question-generation">
-            <h3>Question Generation</h3>
-            <input type="text" id="theme-input" placeholder="Theme (e.g., Star Wars, Animals)">
-            <input type="number" id="quantity-input" value="20" min="1" max="50">
-            <button id="btn-generate" class="btn-primary">Generate</button>
+            <h3>Questions</h3>
             <input type="file" id="file-upload" accept=".json">
-            <button id="btn-upload" class="btn-secondary">Upload JSON</button>
+            <div id="upload-status"></div>
             <div id="save-set-section" class="hidden">
                 <input type="text" id="set-name-input" placeholder="Set name">
                 <button id="btn-save-set" class="btn-secondary">Save Set</button>
@@ -117,7 +114,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="config.js"></script>
     <script src="firebase.js"></script>
-    <script src="ai.js"></script>
     <script src="game.js"></script>
     <script src="ui.js"></script>
     <script src="app.js"></script>

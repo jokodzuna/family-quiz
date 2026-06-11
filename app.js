@@ -8,8 +8,6 @@ initFirebase();
 const btnHost = document.getElementById('btn-host');
 const btnJoin = document.getElementById('btn-join');
 const btnJoinGame = document.getElementById('btn-join-game');
-const btnGenerate = document.getElementById('btn-generate');
-const btnUpload = document.getElementById('btn-upload');
 const btnSaveSet = document.getElementById('btn-save-set');
 const btnLoadSaved = document.getElementById('btn-load-saved');
 const btnStartGame = document.getElementById('btn-start-game');
@@ -23,8 +21,6 @@ const gameModeSelect = document.getElementById('game-mode');
 btnHost.addEventListener('click', handleHostGame);
 btnJoin.addEventListener('click', showJoinScreen);
 btnJoinGame.addEventListener('click', handleJoinGame);
-btnGenerate.addEventListener('click', handleGenerateQuestions);
-btnUpload.addEventListener('click', handleUploadQuestions);
 btnSaveSet.addEventListener('click', handleSaveSet);
 btnLoadSaved.addEventListener('click', handleLoadSaved);
 btnStartGame.addEventListener('click', handleStartGame);
@@ -36,6 +32,7 @@ gameModeSelect.addEventListener('change', handleGameModeChange);
 
 // File input for upload
 const fileUpload = document.getElementById('file-upload');
+fileUpload.addEventListener('change', handleFileUpload);
 
 /**
  * Handle host game button
@@ -125,56 +122,12 @@ async function handleGameModeChange(e) {
 }
 
 /**
- * Handle generate questions button
+ * Handle file upload
  */
-async function handleGenerateQuestions() {
-    const theme = document.getElementById('theme-input').value.trim();
-    const quantity = parseInt(document.getElementById('quantity-input').value);
+async function handleFileUpload(e) {
+    const file = e.target.files[0];
     
-    if (!theme) {
-        alert('Please enter a theme');
-        return;
-    }
-    
-    if (quantity < 1 || quantity > 50) {
-        alert('Quantity must be between 1 and 50');
-        return;
-    }
-    
-    const mode = gameModeSelect.value;
-    
-    try {
-        btnGenerate.disabled = true;
-        btnGenerate.textContent = 'Generating...';
-        
-        console.log('Generating questions with:', { theme, quantity, mode });
-        const questions = await generateQuestions(theme, quantity, mode);
-        console.log('Generated questions:', questions);
-        setQuestions(questions);
-        
-        await setQuestions(questions);
-        
-        showSaveSetSection();
-        alert(`Generated ${questions.length} questions!`);
-    } catch (error) {
-        console.error('Error generating questions:', error);
-        alert(`Failed to generate questions: ${error.message || error}. Check console for details.`);
-    } finally {
-        btnGenerate.disabled = false;
-        btnGenerate.textContent = 'Generate';
-    }
-}
-
-/**
- * Handle upload questions button
- */
-async function handleUploadQuestions() {
-    const file = fileUpload.files[0];
-    
-    if (!file) {
-        alert('Please select a JSON file');
-        return;
-    }
+    if (!file) return;
     
     try {
         const questions = await parseUploadedJSON(file);
@@ -183,10 +136,13 @@ async function handleUploadQuestions() {
         await setQuestions(questions);
         
         showSaveSetSection();
-        alert(`Loaded ${questions.length} questions!`);
+        
+        const uploadStatus = document.getElementById('upload-status');
+        uploadStatus.textContent = `✅ ${questions.length} questions loaded`;
     } catch (error) {
         console.error('Error uploading questions:', error);
-        alert('Failed to load questions. Please check the file format.');
+        const uploadStatus = document.getElementById('upload-status');
+        uploadStatus.textContent = '❌ Failed to load questions';
     }
 }
 
@@ -195,7 +151,6 @@ async function handleUploadQuestions() {
  */
 async function handleSaveSet() {
     const setName = document.getElementById('set-name-input').value.trim();
-    const theme = document.getElementById('theme-input').value.trim();
     const mode = gameModeSelect.value;
     
     if (!setName) {
@@ -209,7 +164,7 @@ async function handleSaveSet() {
     }
     
     try {
-        await saveQuestionSet(setName, theme, mode, currentQuestions);
+        await saveQuestionSet(setName, 'Custom', mode, currentQuestions);
         alert('Question set saved!');
         hideSaveSetSection();
         loadSavedQuestionSets();
@@ -553,4 +508,105 @@ async function handleNewGame() {
  */
 function generatePlayerId() {
     return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+/**
+ * Parse uploaded JSON file
+ */
+function parseUploadedJSON(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            try {
+                const questions = JSON.parse(e.target.result);
+                resolve(questions);
+            } catch (error) {
+                reject(new Error('Invalid JSON file'));
+            }
+        };
+        
+        reader.onerror = () => {
+            reject(new Error('Error reading file'));
+        };
+        
+        reader.readAsText(file);
+    });
+}
+
+/**
+ * Fuzzy matching for type answer mode
+ */
+function fuzzyMatch(input, correct) {
+    // Case insensitive
+    const inputLower = input.toLowerCase().trim();
+    const correctLower = correct.toLowerCase().trim();
+    
+    // Strip leading articles
+    const articles = ['a', 'an', 'the'];
+    let inputClean = inputLower;
+    let correctClean = correctLower;
+    
+    articles.forEach(article => {
+        if (inputClean.startsWith(article + ' ')) {
+            inputClean = inputClean.substring(article.length + 1);
+        }
+        if (correctClean.startsWith(article + ' ')) {
+            correctClean = correctClean.substring(article.length + 1);
+        }
+    });
+    
+    // Exact match
+    if (inputClean === correctClean) {
+        return true;
+    }
+    
+    // Levenshtein distance
+    const distance = levenshteinDistance(inputClean, correctClean);
+    const maxLength = Math.max(inputClean.length, correctClean.length);
+    
+    // Tolerance: 1 error for up to 5 chars, 2 for 6-10, 3 for 11+
+    let tolerance;
+    if (maxLength <= 5) {
+        tolerance = 1;
+    } else if (maxLength <= 10) {
+        tolerance = 2;
+    } else {
+        tolerance = 3;
+    }
+    
+    return distance <= tolerance;
+}
+
+/**
+ * Calculate Levenshtein distance
+ */
+function levenshteinDistance(str1, str2) {
+    const m = str1.length;
+    const n = str2.length;
+    const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+    
+    for (let i = 0; i <= m; i++) {
+        dp[i][0] = i;
+    }
+    
+    for (let j = 0; j <= n; j++) {
+        dp[0][j] = j;
+    }
+    
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            if (str1[i - 1] === str2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1];
+            } else {
+                dp[i][j] = 1 + Math.min(
+                    dp[i - 1][j],
+                    dp[i][j - 1],
+                    dp[i - 1][j - 1]
+                );
+            }
+        }
+    }
+    
+    return dp[m][n];
 }
