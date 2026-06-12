@@ -308,3 +308,67 @@ function handleMultipleChoiceAnswer(answer) {
     // This will be implemented in app.js
     console.log('Selected answer:', answer);
 }
+
+/**
+ * Custom alert modal
+ */
+function showAlert(message) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('alert-modal');
+        const messageEl = document.getElementById('alert-message');
+        const okBtn = document.getElementById('alert-ok-btn');
+        
+        messageEl.textContent = message;
+        modal.classList.remove('hidden');
+        
+        const handleOk = () => {
+            modal.classList.add('hidden');
+            okBtn.removeEventListener('click', handleOk);
+            resolve();
+        };
+        
+        okBtn.addEventListener('click', handleOk);
+    });
+}
+
+/**
+ * Custom prompt modal
+ */
+function showPrompt(message, defaultValue = '') {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('prompt-modal');
+        const messageEl = document.getElementById('prompt-message');
+        const input = document.getElementById('prompt-input');
+        const okBtn = document.getElementById('prompt-ok-btn');
+        const cancelBtn = document.getElementById('prompt-cancel-btn');
+        
+        messageEl.textContent = message;
+        input.value = defaultValue;
+        modal.classList.remove('hidden');
+        input.focus();
+        
+        const handleOk = () => {
+            modal.classList.add('hidden');
+            okBtn.removeEventListener('click', handleOk);
+            cancelBtn.removeEventListener('click', handleCancel);
+            resolve(input.value);
+        };
+        
+        const handleCancel = () => {
+            modal.classList.add('hidden');
+            okBtn.removeEventListener('click', handleOk);
+            cancelBtn.removeEventListener('click', handleCancel);
+            resolve(null);
+        };
+        
+        okBtn.addEventListener('click', handleOk);
+        cancelBtn.addEventListener('click', handleCancel);
+        
+        // Allow Enter key to submit
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleOk();
+            }
+        });
+    });
+}

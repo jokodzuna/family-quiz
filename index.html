@@ -109,6 +109,25 @@
         </div>
     </div>
 
+    <!-- Custom Modals -->
+    <div id="alert-modal" class="modal hidden">
+        <div class="modal-content">
+            <p id="alert-message"></p>
+            <button id="alert-ok-btn" class="btn-primary">OK</button>
+        </div>
+    </div>
+
+    <div id="prompt-modal" class="modal hidden">
+        <div class="modal-content">
+            <p id="prompt-message"></p>
+            <input type="text" id="prompt-input" class="modal-input">
+            <div class="modal-buttons">
+                <button id="prompt-cancel-btn" class="btn-secondary">Cancel</button>
+                <button id="prompt-ok-btn" class="btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>

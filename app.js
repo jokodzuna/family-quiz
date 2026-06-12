@@ -39,7 +39,7 @@ fileUpload.addEventListener('change', handleFileUpload);
  */
 async function handleHostGame() {
     const playerId = generatePlayerId();
-    const playerName = prompt('Enter your name as host:');
+    const playerName = await showPrompt('Enter your name');
     
     if (!playerName) return;
     
@@ -60,7 +60,7 @@ async function handleHostGame() {
         loadSavedQuestionSets();
     } catch (error) {
         console.error('Error hosting game:', error);
-        alert(`Failed to create room: ${error.message || error}. Check console for details.`);
+        await showAlert(`Failed to create room: ${error.message || error}. Check console for details.`);
     }
 }
 
@@ -79,12 +79,12 @@ async function handleJoinGame() {
     const playerName = document.getElementById('player-name').value.trim();
     
     if (!roomCode || !playerName) {
-        alert('Please enter both room code and your name');
+        await showAlert('Please enter both room code and your name');
         return;
     }
     
     if (roomCode.length !== 4) {
-        alert('Room code must be 4 digits');
+        await showAlert('Room code must be 4 digits');
         return;
     }
     
@@ -108,7 +108,7 @@ async function handleJoinGame() {
         });
     } catch (error) {
         console.error('Error joining game:', error);
-        alert('Failed to join room. Please check the room code and try again.');
+        await showAlert('Failed to join room. Please check the room code and try again.');
     }
 }
 
@@ -154,23 +154,23 @@ async function handleSaveSet() {
     const mode = gameModeSelect.value;
     
     if (!setName) {
-        alert('Please enter a name for this set');
+        await showAlert('Please enter a name for this set');
         return;
     }
     
     if (!currentQuestions || currentQuestions.length === 0) {
-        alert('No questions to save');
+        await showAlert('No questions to save');
         return;
     }
     
     try {
         await saveQuestionSet(setName, 'Custom', mode, currentQuestions);
-        alert('Question set saved!');
+        await showAlert('Question set saved!');
         hideSaveSetSection();
         loadSavedQuestionSets();
     } catch (error) {
         console.error('Error saving set:', error);
-        alert('Failed to save question set');
+        await showAlert('Failed to save question set');
     }
 }
 
@@ -181,7 +181,7 @@ async function handleLoadSaved() {
     const setId = document.getElementById('load-saved-select').value;
     
     if (!setId) {
-        alert('Please select a saved set');
+        await showAlert('Please select a saved set');
         return;
     }
     
@@ -204,7 +204,7 @@ async function handleLoadSaved() {
         }
     } catch (error) {
         console.error('Error loading saved set:', error);
-        alert('Failed to load question set');
+        await showAlert('Failed to load question set');
     }
 }
 
@@ -225,7 +225,7 @@ async function loadSavedQuestionSets() {
  */
 async function handleStartGame() {
     if (!currentQuestions || currentQuestions.length === 0) {
-        alert('Please generate or load questions first');
+        await showAlert('Please generate or load questions first');
         return;
     }
     
@@ -243,7 +243,7 @@ async function handleStartGame() {
         onLockedOutChanged(handleLockedOutChanged);
     } catch (error) {
         console.error('Error starting game:', error);
-        alert('Failed to start game');
+        await showAlert('Failed to start game');
     }
 }
 
@@ -420,9 +420,9 @@ async function handleSubmitAnswer() {
         const isCorrect = await handleAnswer(currentPlayerId, answer, currentQuestionData.answer);
         
         if (isCorrect) {
-            alert('Correct! +5 points');
+            await showAlert('Correct! +5 points');
         } else {
-            alert('Wrong! -2 points');
+            await showAlert('Wrong! -2 points');
         }
     } catch (error) {
         console.error('Error submitting answer:', error);
@@ -450,9 +450,9 @@ async function handleMultipleChoiceAnswer(answer) {
         });
         
         if (isCorrect) {
-            alert('Correct! +5 points');
+            await showAlert('Correct! +5 points');
         } else {
-            alert('Wrong! -2 points');
+            await showAlert('Wrong! -2 points');
         }
     } catch (error) {
         console.error('Error submitting answer:', error);
@@ -493,7 +493,7 @@ async function handlePlayAgain() {
         await gameRef.child('status').set('active');
     } catch (error) {
         console.error('Error restarting game:', error);
-        alert('Failed to restart game');
+        await showAlert('Failed to restart game');
     }
 }
 
