@@ -1,6 +1,45 @@
 // App Entry Point
 // Initializes Firebase, handles screen routing
 
+// Splash Screen Transition
+function initSplashScreen() {
+    const splashScreen = document.getElementById('screen-splash');
+    const homeScreen = document.getElementById('screen-home');
+    const blindsContainer = document.getElementById('vertical-blinds');
+    
+    // Create blind strips
+    const numStrips = 12;
+    for (let i = 0; i < numStrips; i++) {
+        const strip = document.createElement('div');
+        strip.className = 'blind-strip';
+        blindsContainer.appendChild(strip);
+    }
+    
+    // Show splash screen, hide home screen initially
+    homeScreen.classList.add('hidden');
+    
+    // After 2 seconds, start transition
+    setTimeout(() => {
+        const strips = document.querySelectorAll('.blind-strip');
+        
+        // Collapse strips with staggered delay
+        strips.forEach((strip, index) => {
+            setTimeout(() => {
+                strip.classList.add('collapse');
+            }, index * 50); // 50ms stagger between each strip
+        });
+        
+        // After transition completes, remove splash screen
+        setTimeout(() => {
+            splashScreen.remove();
+            homeScreen.classList.remove('hidden');
+        }, 700); // Wait for all strips to collapse
+    }, 2000); // 2 second display time
+}
+
+// Initialize splash screen
+initSplashScreen();
+
 // Initialize Firebase
 initFirebase();
 
