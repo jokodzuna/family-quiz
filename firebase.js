@@ -140,6 +140,20 @@ function onPlayersChanged(callback) {
 }
 
 /**
+ * Listen to game mode changes
+ */
+function onGameModeChanged(callback) {
+    if (!gameRef) return;
+    
+    const listener = gameRef.child('mode').on('value', (snapshot) => {
+        const data = snapshot.val();
+        callback(data);
+    });
+    
+    listeners.push({ ref: gameRef.child('mode'), listener });
+}
+
+/**
  * Listen to buzz changes
  */
 function onBuzzChanged(callback) {

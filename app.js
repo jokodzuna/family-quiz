@@ -125,6 +125,9 @@ async function handleJoinGame() {
         // Listen to game state changes
         onGameStateChanged(handleGameStateChanged);
         
+        // Listen to game mode changes
+        onGameModeChanged(handleGameModeChanged);
+        
         // Set connected status on page unload
         window.addEventListener('beforeunload', () => {
             setPlayerConnected(playerId, false);
@@ -291,6 +294,15 @@ function handleGameStateChanged(gameData) {
 }
 
 /**
+ * Handle game mode changes
+ */
+function handleGameModeChanged(mode) {
+    if (mode) {
+        setGameMode(mode);
+    }
+}
+
+/**
  * Handle active game state
  */
 function handleActiveGame(gameData) {
@@ -440,12 +452,17 @@ async function handleSubmitAnswer() {
     if (!answer) return;
     
     try {
-        const isCorrect = await handleAnswer(currentPlayerId, answer, currentQuestionData.answer);
+        const result = await handleAnswer(currentPlayerId, answer, currentQuestionData.answer);
         
-        if (isCorrect) {
+        if (result.isCorrect) {
             await showAlert('Correct! +5 points');
         } else {
             await showAlert('Wrong! -2 points');
+        }
+        
+        // Move to next question if needed
+        if (result.shouldMoveNext) {
+            await nextQuestion();
         }
     } catch (error) {
         console.error('Error submitting answer:', error);
@@ -459,7 +476,7 @@ async function handleMultipleChoiceAnswer(answer) {
     if (!currentQuestionData || !currentPlayerId) return;
     
     try {
-        const isCorrect = await handleAnswer(currentPlayerId, answer, currentQuestionData.answer);
+        const result = await handleAnswer(currentPlayerId, answer, currentQuestionData.answer);
         
         // Highlight correct/wrong
         const buttons = document.querySelectorAll('.option-btn');
@@ -467,15 +484,20 @@ async function handleMultipleChoiceAnswer(answer) {
             btn.disabled = true;
             if (btn.textContent === currentQuestionData.answer) {
                 btn.classList.add('correct');
-            } else if (btn.textContent === answer && !isCorrect) {
+            } else if (btn.textContent === answer && !result.isCorrect) {
                 btn.classList.add('wrong');
             }
         });
         
-        if (isCorrect) {
+        if (result.isCorrect) {
             await showAlert('Correct! +5 points');
         } else {
             await showAlert('Wrong! -2 points');
+        }
+        
+        // Move to next question if needed
+        if (result.shouldMoveNext) {
+            await nextQuestion();
         }
     } catch (error) {
         console.error('Error submitting answer:', error);

@@ -134,10 +134,8 @@ async function handleAnswer(playerId, answer, correctAnswer) {
     await updatePlayerScore(playerId, scoreChange);
     
     if (isCorrect) {
-        // Correct answer - move to next question after delay
-        setTimeout(async () => {
-            await nextQuestion();
-        }, 2000);
+        // Correct answer - caller will handle nextQuestion after alert
+        return { isCorrect, shouldMoveNext: true };
     } else {
         // Wrong answer - lock out player
         await lockOutPlayer(playerId);
@@ -147,15 +145,12 @@ async function handleAnswer(playerId, answer, correctAnswer) {
         const gameData = snapshot.val();
         
         if (areAllPlayersLockedOut(gameData.lockedOut, gameData.players)) {
-            // Reveal correct answer and move to next question
-            setTimeout(async () => {
-                await nextQuestion();
-            }, 3000);
+            // Reveal correct answer and caller will handle nextQuestion after alert
+            return { isCorrect, shouldMoveNext: true };
         } else {
             // Re-enable buzzers for remaining players
             await clearBuzz();
+            return { isCorrect, shouldMoveNext: false };
         }
     }
-    
-    return isCorrect;
 }
