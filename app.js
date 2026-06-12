@@ -7,24 +7,25 @@ function initSplashScreen() {
     const homeScreen = document.getElementById('screen-home');
     const blindsContainer = document.getElementById('vertical-blinds');
     
-    // Create blind strips
-    const numStrips = 12;
-    for (let i = 0; i < numStrips; i++) {
-        const strip = document.createElement('div');
-        strip.className = 'blind-strip';
-        blindsContainer.appendChild(strip);
-    }
-    
-    // Show splash screen, hide home screen initially
+    // Hide home screen initially
     homeScreen.classList.add('hidden');
     
     // After 2 seconds, start transition
     setTimeout(() => {
+        // Create blind strips now (not at start)
+        const numStrips = 12;
+        for (let i = 0; i < numStrips; i++) {
+            const strip = document.createElement('div');
+            strip.className = 'blind-strip visible';
+            blindsContainer.appendChild(strip);
+        }
+        
         const strips = document.querySelectorAll('.blind-strip');
         
-        // Collapse strips with staggered delay
+        // Immediately start collapsing them
         strips.forEach((strip, index) => {
             setTimeout(() => {
+                strip.classList.remove('visible');
                 strip.classList.add('collapse');
             }, index * 50); // 50ms stagger between each strip
         });
